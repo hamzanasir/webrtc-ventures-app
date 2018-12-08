@@ -26,35 +26,43 @@ const friends = [
 
 const myNumber = process.env.MYNUMBER;
 
-app.route('/webhooks/inbound-sms')
-    .get(handleInboundSms)
-    .post(handleInboundSms);
+//Webhook for messagen sent from me
+app.route('/me/inbound')
+    .get(textFromMe)
+    .post(textFromMe);
 
-function handleInboundSms(request, response) {
+//Webhook for messages sent by my friends
+app.route('/friends/inbound')
+  .get(textFromFriends)
+  .post(textFromFriends);
+
+function textFromMe(request, response) {
   const incomingText = Object.assign(request.query, request.body);
-  const textToSend = `${incomingText.text}\n Please respond with Yes or No if you can join me!`;
+  const textToSend = `${incomingText.text}\nPlease respond with Yes or No if you can join me!`;
 
-  if (incomingText.msisdn === myNumber) {
-    //Text message from me
-    friends.forEach((friend) => {
-      nexmo.message.sendSms(process.env.MYVIRTNUMBER, friend.number, textToSend);
-    });
+  friends.forEach((friend) => {
+    nexmo.message.sendSms(process.env.FRIENDSVIRTNUMBER, friend.number, textToSend);
+  });
+
+  response.status(204).send();
+}
+
+function textFromFriends(request, response) {
+  const incomingText = Object.assign(request.query, request.body);
+
+  if (incomingText.text.toLowerCase() !== 'yes' && incomingText.text.toLowerCase() !== 'no') {
+    //User replied with invalid response.
+    nexmo.message.sendSms(process.env.FRIENDSVIRTNUMBER, incomingText.msisdn, 'You replied with an invalid response. Please reply with yes or no.');
   } else {
-    //Reply from my friends
-    if (incomingText.text.toLowerCase() !== 'yes' && incomingText.text.toLowerCase() !== 'no') {
-      //User replied with invalid response.
-      nexmo.message.sendSms(process.env.MYVIRTNUMBER, incomingText.msisdn, 'You replied with an invalid response. Please reply with yes or no.');
-    } else {
-      //Lazy lookup of friend's name. Again would probably like to do this using a HashMap, Cache store or DB
-      friends.forEach((friend) => {
-        if (friend.number === incomingText.msisdn) {
-          //Send me text message reply.
-          nexmo.message.sendSms(process.env.MYVIRTNUMBER, myNumber,
-            `${friend.name} said ${incomingText.text.toLowerCase() === 'yes' ? 'yes!' : 'no...'}` //Make text look more natural.
-          );
-        }
-      });
-    }
+    //Lazy lookup of friend's name. Again would probably like to do this using a HashMap, Cache store or DB
+    friends.forEach((friend) => {
+      if (friend.number === incomingText.msisdn) {
+        //Send me text message reply.
+        nexmo.message.sendSms(process.env.MYVIRTNUMBER, myNumber,
+          `${friend.name} said ${incomingText.text.toLowerCase() === 'yes' ? 'yes!' : 'no...'}` //Make text look more natural.
+        );
+      }
+    });
   }
   response.status(204).send();
 }
