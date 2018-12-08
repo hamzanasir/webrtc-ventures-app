@@ -1,0 +1,25 @@
+[
+  {
+    "action": "talk",
+    "text": "",
+    "voiceName": "Amy",
+    "bargeIn": false
+  },
+  {
+    "action": "talk",
+    "text": "Press 1, for yes, and 2, for no, followed by the hash key.",
+    "voiceName": "Amy",
+    "bargeIn": true
+  },
+  {
+    "action": "input",
+    "eventUrl": ["https://5ecb078f.ngrok.io/friends/outbound/response"],
+    "timeOut": 10,
+    "submitOnHash": true
+  },
+  {
+    "action": "talk",
+    "text": "Thanks for your input, goodbye.",
+    "voiceName": "Amy"
+  }
+]
